@@ -60,28 +60,19 @@ jobs:
         sed -i 's/ifeq ($(GOLANG),yes)/ifeq ($(GOLANG),no)/g' Makefile
         sed -i 's|(inc_prefix)/include|(inc_prefix)/usr/include|g' libcap/Makefile
         
-        BUILD_CC=gcc make CC="$NDK_TOOLCHAIN/clang --target=$TARGET$API" AR=$NDK_TOOLCHAIN/llvm-ar \
-        RANLIB=$NDK_TOOLCHAIN/llvm-ranlib OBJCOPY=$NDK_TOOLCHAIN/llvm-objcopy PREFIX=/data/sysroot \
-        prefix=/data/sysroot
+        BUILD_CC=gcc make \
+          CC="$NDK_TOOLCHAIN/clang --target=$TARGET$API" \
+          AR=$NDK_TOOLCHAIN/llvm-ar \
+          RANLIB=$NDK_TOOLCHAIN/llvm-ranlib \
+          OBJCOPY=$NDK_TOOLCHAIN/llvm-objcopy \
+          PREFIX=/data/sysroot \
+          prefix=/data/sysroot
+          
         sudo make install DESTDIR=/data/sysroot
-        echo "RELEASE_DATE=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
+        sudo find /data/sysroot -type f \( -executable -o -name "*.a" \) -exec $NDK_TOOLCHAIN/llvm-strip --strip-all {} \;
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v4.3.1
       with:
         name: android-${{ github.event.inputs.target_arch || 'aarch64' }}-libcap-dev
         path: /data/sysroot/*
-
-    - name: Create a ZIP file for artifact
-      run: zip -r android-${{ github.event.inputs.target_arch || 'aarch64' }}-libcap-dev.zip /data/sysroot/*
-    
-    - name: Create Release and Upload Release Asset
-      uses: softprops/action-gh-release@v1
-      with:
-        tag_name: ${{ env.RELEASE_DATE }}
-        name: Release ${{ env.RELEASE_DATE }}
-        body: TODO New Release.
-        draft: false
-        prerelease: false
-        files: |
-            android-${{ github.event.inputs.target_arch || 'aarch64' }}-libcap-dev.zip
