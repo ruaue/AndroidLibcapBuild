@@ -37,7 +37,6 @@ jobs:
     - name: Set build parameters
       id: vars
       run: |
-        # Set target triple based on architecture
         case "${{ github.event.inputs.target_arch || 'aarch64' }}" in
           aarch64) target="aarch64-linux-android" ;;
           arm) target="armv7a-linux-androideabi" ;;
@@ -45,7 +44,6 @@ jobs:
           i686) target="i686-linux-android" ;;
           *) echo "Unsupported architecture"; exit 1 ;;
         esac
-        
         echo "target=$target" >> $GITHUB_OUTPUT
         echo "api=${{ github.event.inputs.android_api || '30' }}" >> $GITHUB_OUTPUT
 
@@ -71,8 +69,8 @@ jobs:
         sudo make install DESTDIR=/data/sysroot
         sudo find /data/sysroot -type f \( -executable -o -name "*.a" \) -exec $NDK_TOOLCHAIN/llvm-strip --strip-all {} \;
 
-    - name: Upload artifacts
+    - name: Upload sbin binaries
       uses: actions/upload-artifact@v4.3.1
       with:
-        name: android-${{ github.event.inputs.target_arch || 'aarch64' }}-libcap-dev
-        path: /data/sysroot/*
+        name: android-${{ github.event.inputs.target_arch || 'aarch64' }}-libcap-sbin
+        path: /data/sysroot/sbin/*
